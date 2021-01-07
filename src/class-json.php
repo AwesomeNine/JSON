@@ -21,7 +21,7 @@ class JSON {
 	/**
 	 * JSON Holder.
 	 *
-	 * @var string
+	 * @var array
 	 */
 	private $data = array();
 
