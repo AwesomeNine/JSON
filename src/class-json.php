@@ -23,7 +23,7 @@ class JSON {
 	 *
 	 * @var array
 	 */
-	private $data = array();
+	private $data = [];
 
 	/**
 	 * Default Object name.
@@ -66,7 +66,7 @@ class JSON {
 		}
 
 		$hook = is_admin() ? 'admin_footer' : 'wp_footer';
-		add_action( $hook, array( $this, 'output' ), 0 );
+		add_action( $hook, [ $this, 'output' ], 0 );
 		return $this;
 	}
 
@@ -158,8 +158,8 @@ class JSON {
 	 * @return JOSN
 	 */
 	public function clear_all() {
-		$this->data                               = array();
-		$this->data[ $this->default_object_name ] = array();
+		$this->data                               = [];
+		$this->data[ $this->default_object_name ] = [];
 
 		return $this;
 	}
