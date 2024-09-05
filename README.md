@@ -12,7 +12,8 @@
 
 ## 📃 About JSON
 
-This package provides ease of managing data localization within WordPress.
+This package provides ease of managing data localization within WordPress. It enables developers to add, remove, and manipulate JSON objects that can be output in the footer of WordPress pages.
+
 
 ## 💾 Installation
 
@@ -25,14 +26,17 @@ composer require awesome9/json
 First, you need to spin out configuration for your json.
 
 ```php
-Awesome9\JSON\JSON::get()
-	->set_object_name( 'awesome9' );  // Default object name to be output.
+use Awesome9\JSON\JSON;
+
+// Initialize JSON manager with a default object name
+$json_manager = new JSON('awesome9');
+$json_manager->hooks();
 ```
 
 Now, let's add and remove some data to be output in admin.
 
 ```php
-Awesome9\JSON\JSON::get()
+$json_manager
 	->add( 'company', 'great' )
 	->add( 'remove', 'me' )
 	->add( 'array', array(
@@ -40,8 +44,11 @@ Awesome9\JSON\JSON::get()
 		'b' => 'test',
 	) );
 
-Awesome9\JSON\JSON::get()
-	->remove( 'remove' )
+$json_manager
+	->remove( 'remove' );
+
+// Clear all data stored in the JSON object:
+$json_manager->clear_all();
 ```
 
 And you can use it in your JavaScript files as
@@ -49,29 +56,6 @@ And you can use it in your JavaScript files as
 console.log( awesome9.company );
 console.log( awesome9.array.a );
 ```
-
-### Available JSON methods
-
-JSON class methods.
-
-| Method                                                                         | Description              | Returns                                                      |
-| ------------------------------------------------------------------------------ | ------------------------ | ------------------------------------------------------------ |
-| ```add( (string) $key, (mixed) $value, (string) $object_name )```              | Add the variable         | `$this`                                                      |
-| ```remove( (string) $var_name, (string) $object_name ) )```                    | Removes the variable     | `$this`                                                      |
-| ```clear_all()```                                                              | Clears all data          | `$this`                                                      |
-| ```output()```                                                                 | Outputs the JSON data    |                                                              |
-
-### Helper functions
-
-You can use the procedural approach as well:
-
-```php
-Awesome9\JSON\add( $key, $value, $object_name = false );
-
-Awesome9\JSON\remove( $key, $object_name = false );
-```
-
-All the parameters remains the same as for the `JSON` class.
 
 ## 📖 Changelog
 
