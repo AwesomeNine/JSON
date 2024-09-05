@@ -16,9 +16,6 @@
 		"optimize-autoloader": true
 	},
 	"autoload": {
-		"files": [
-			"src/functions.php"
-		],
 		"classmap" : [ "src/" ]
 	}
 }
