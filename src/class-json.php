@@ -1,8 +1,8 @@
 <?php
 /**
- * JSON manger class
+ * JSON manager class
  *
- * It handles json output for use on backend and frontend.
+ * It handles JSON output for use on the backend and frontend.
  *
  * @since   1.0.0
  * @package Awesome9\JSON
@@ -23,12 +23,12 @@ class JSON {
 	 *
 	 * @var array
 	 */
-	private $data = [];
+	private array $data = [];
 
 	/**
 	 * Default Object name.
 	 *
-	 * @var string
+	 * @var string|null
 	 */
 	private $default_object_name = null;
 
@@ -37,7 +37,7 @@ class JSON {
 	 *
 	 * @param string $object_name Object name to be used.
 	 */
-	public function __construct( $object_name ) {
+	public function __construct( string $object_name ) {
 		$this->default_object_name = $object_name;
 	}
 
@@ -46,17 +46,17 @@ class JSON {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @throws InvalidArgumentException When object name not defined.
+	 * @throws InvalidArgumentException When the object name is not defined.
 	 *
 	 * @return void
 	 */
 	public function hooks(): void {
 		if ( empty( $this->default_object_name ) ) {
-			throw new InvalidArgumentException( 'Please set default object name to be used when printing JSON.' );
+			throw new InvalidArgumentException( 'Please set a default object name to be used when printing JSON.' );
 		}
 
 		$hook = is_admin() ? 'admin_footer' : 'wp_footer';
-		add_action( $hook, [ $this, 'output' ], 0 );
+		add_action( $hook, [ $this, 'render_json_to_footer' ], 0 );
 	}
 
 	/**
@@ -66,33 +66,23 @@ class JSON {
 	 *
 	 * @param mixed ...$args Arguments.
 	 *
-	 * Parameters can be
-	 * 1. array|string Unique identifier or array<key, value>.
-	 * 2. array|string The data itself can be either a scalar or an array.
-	 *                 In Case of first param an array this can be object_name.
-	 * 3. string Name for the JavaScript object.
-	 *           Passed directly, so it should be qualified JS variable.
-	 *
-	 * @return JSON
+	 * @return self
 	 */
-	public function add( ...$args ): JSON {
-		list( $key, $value, $object_name ) = $this->get_add_data( $args );
+	public function add( ...$args ): self {
+		[ $key, $value, $object_name ] = $this->get_add_data( $args );
 
 		// Early Bail!!
 		if ( empty( $key ) ) {
 			return $this;
 		}
 
-		// If array is passed.
 		if ( is_array( $key ) ) {
 			foreach ( $key as $arr_key => $arr_value ) {
-				$this->add_to_storage( $arr_key, $arr_value, $object_name );
+				$this->add_to_storage( (string) $arr_key, $arr_value, $object_name );
 			}
-
-			return $this;
+		} else {
+			$this->add_to_storage( (string) $key, $value, $object_name );
 		}
-
-		$this->add_to_storage( $key, $value, $object_name );
 
 		return $this;
 	}
@@ -103,13 +93,12 @@ class JSON {
 	 * @since  1.0.0
 	 *
 	 * @param string $key         Unique identifier.
-	 * @param mixed  $value       The data itself can be either a single or an array.
+	 * @param mixed  $value       The data itself, which can be either a single or an array.
 	 * @param string $object_name Name for the JavaScript object.
-	 *                            Passed directly, so it should be qualified JS variable.
+	 *                            Passed directly, so it should be a qualified JS variable.
 	 * @return void
 	 */
-	private function add_to_storage( $key, $value, $object_name ): void {
-		// If key doesn't exists.
+	private function add_to_storage( string $key, mixed $value, string $object_name ): void {
 		if ( ! isset( $this->data[ $object_name ][ $key ] ) ) {
 			$this->data[ $object_name ][ $key ] = $value;
 			return;
@@ -128,19 +117,15 @@ class JSON {
 	 * @since  1.0.0
 	 *
 	 * @param string $key         Unique identifier.
-	 * @param string $object_name Name for the JavaScript object.
-	 *                            Passed directly, so it should be qualified JS variable.
-	 * @return JSON
+	 * @param string|null $object_name Name for the JavaScript object.
+	 * @return self
 	 */
-	public function remove( $key, $object_name = false ): JSON {
-		// Early Bail!!
+	public function remove( string $key, ?string $object_name = null ): self {
 		if ( empty( $key ) ) {
 			return $this;
 		}
 
-		if ( empty( $object_name ) ) {
-			$object_name = $this->default_object_name;
-		}
+		$object_name = $object_name ?? $this->default_object_name;
 
 		if ( isset( $this->data[ $object_name ][ $key ] ) ) {
 			unset( $this->data[ $object_name ][ $key ] );
@@ -154,10 +139,10 @@ class JSON {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return JSON
+	 * @return self
 	 */
-	public function clear_all(): JSON {
-		$this->data                               = [];
+	public function clear_all(): self {
+		$this->data = [];
 		$this->data[ $this->default_object_name ] = [];
 
 		return $this;
@@ -170,13 +155,13 @@ class JSON {
 	 *
 	 * @return void
 	 */
-	public function output(): void {
+	public function render_json_to_footer(): void {
 		$script = $this->encode();
 		if ( ! $script ) {
 			return;
 		}
 
-		echo "<script type='text/javascript'>\n"; // CDATA and type='text/javascript' is not needed for HTML 5.
+		echo "<script type='text/javascript'>\n";
 		echo "/* <![CDATA[ */\n";
 		echo "$script\n"; // phpcs:ignore
 		echo "/* ]]> */\n";
@@ -205,16 +190,16 @@ class JSON {
 	 * @since  1.0.0
 	 *
 	 * @param string $object_name Object name to use as JS variable.
-	 * @param array  $object_data Object data to json encode.
+	 * @param array  $object_data Object data to JSON encode.
 	 *
 	 * @return string
 	 */
-	private function single_object( $object_name, $object_data ): string {
+	private function single_object( string $object_name, array $object_data ): string {
 		if ( empty( $object_data ) ) {
 			return '';
 		}
 
-		foreach ( (array) $object_data as $key => $value ) {
+		foreach ( $object_data as $key => $value ) {
 			if ( ! is_scalar( $value ) ) {
 				continue;
 			}
@@ -226,20 +211,20 @@ class JSON {
 	}
 
 	/**
-	 * Normalize add arguments
+	 * Normalize add arguments.
 	 *
 	 * @param array $args Arguments array.
 	 *
 	 * @return array
 	 */
-	private function get_add_data( $args ): array {
-		$key         = $args[0] ?? false;
-		$value       = $args[1] ?? false;
+	private function get_add_data( array $args ): array {
+		$key         = $args[0] ?? null;
+		$value       = $args[1] ?? null;
 		$object_name = $args[2] ?? $this->default_object_name;
 
 		if ( is_array( $key ) && ! empty( $value ) ) {
 			$object_name = $value;
-			$value       = false;
+			$value       = null;
 		}
 
 		return [
