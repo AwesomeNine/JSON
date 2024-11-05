@@ -56,7 +56,7 @@ class JSON {
 		}
 
 		$hook = is_admin() ? 'admin_footer' : 'wp_footer';
-		add_action( $hook, [ $this, 'render_json_to_footer' ], 0 );
+		add_action( $hook, [ $this, 'output' ], 0 );
 	}
 
 	/**
@@ -76,6 +76,7 @@ class JSON {
 			return $this;
 		}
 
+		// If array is passed.
 		if ( is_array( $key ) ) {
 			foreach ( $key as $arr_key => $arr_value ) {
 				$this->add_to_storage( (string) $arr_key, $arr_value, $object_name );
@@ -108,7 +109,7 @@ class JSON {
 		$old_value = $this->data[ $object_name ][ $key ];
 		$is_array  = is_array( $old_value ) && is_array( $value );
 
-		$this->data[ $object_name ][ $key ] = $is_array ? array_merge( $old_value, $value ) : $value;
+		$this->data[ $object_name ][ $key ] = $is_array ? array_replace_recursive( $old_value, $value ) : $value;
 	}
 
 	/**
@@ -116,8 +117,9 @@ class JSON {
 	 *
 	 * @since  1.0.0
 	 *
-	 * @param string $key         Unique identifier.
+	 * @param string      $key         Unique identifier.
 	 * @param string|null $object_name Name for the JavaScript object.
+	 *
 	 * @return self
 	 */
 	public function remove( string $key, ?string $object_name = null ): self {
@@ -125,7 +127,9 @@ class JSON {
 			return $this;
 		}
 
-		$object_name = $object_name ?? $this->default_object_name;
+		if ( empty( $object_name ) ) {
+			$object_name = $this->default_object_name;
+		}
 
 		if ( isset( $this->data[ $object_name ][ $key ] ) ) {
 			unset( $this->data[ $object_name ][ $key ] );
@@ -142,7 +146,7 @@ class JSON {
 	 * @return self
 	 */
 	public function clear_all(): self {
-		$this->data = [];
+		$this->data                               = [];
 		$this->data[ $this->default_object_name ] = [];
 
 		return $this;
@@ -155,7 +159,7 @@ class JSON {
 	 *
 	 * @return void
 	 */
-	public function render_json_to_footer(): void {
+	public function output(): void {
 		$script = $this->encode();
 		if ( ! $script ) {
 			return;

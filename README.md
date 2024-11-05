@@ -23,7 +23,9 @@ composer require awesome9/json
 
 ## 🕹 Usage
 
-First, you need to spin out configuration for your json.
+### Initialize the JSON Manager
+
+To start using the JSON manager, initialize the `JSON` class with a default object name. This object name will be used as the JavaScript variable where the JSON data will be accessible.
 
 ```php
 use Awesome9\JSON\JSON;
@@ -32,29 +34,46 @@ use Awesome9\JSON\JSON;
 $json_manager = new JSON('awesome9');
 $json_manager->hooks();
 ```
+The `hooks()` method binds the necessary WordPress hooks to output the JSON data automatically in the footer.
 
-Now, let's add and remove some data to be output in admin.
+### Adding Data
+
+Use the `add()` method to add key-value pairs to the JSON object. You can add data in two ways:
+- As individual key-value pairs.
+- As an array of key-value pairs.
 
 ```php
-$json_manager
-	->add( 'company', 'great' )
-	->add( 'remove', 'me' )
-	->add( 'array', array(
-		'a' => 'test',
-		'b' => 'test',
-	) );
+// Adding individual data
+$json_manager->add('company', 'awesome');
+$json_manager->add('product', 'json_manager');
 
-$json_manager
-	->remove( 'remove' );
+// Adding multiple key-value pairs using an array
+$json_manager->add([
+    'feature1' => 'easy to use',
+    'feature2' => 'robust',
+]);
+```
 
-// Clear all data stored in the JSON object:
+### Removing Data
+To remove a specific key from the JSON object, use the `remove()` method:
+
+```php
+$json_manager->remove('product'); // Removes the 'product' key
+```
+
+### Clearing All Data
+If you need to remove all data stored in the JSON object, use `clear_all()`:
+
+```php
 $json_manager->clear_all();
 ```
 
-And you can use it in your JavaScript files as
+### Accessing Data in JavaScript
+After setting up data with the JSON manager, you can access it on the frontend in JavaScript. The default object name (in this case, `awesome9`) will hold the data.
+
 ```js
-console.log( awesome9.company );
-console.log( awesome9.array.a );
+console.log(awesome9.company);     // Outputs: 'awesome'
+console.log(awesome9.feature1);    // Outputs: 'easy to use'
 ```
 
 ## 📖 Changelog
